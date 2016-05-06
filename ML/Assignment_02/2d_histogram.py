@@ -85,7 +85,7 @@ def compute_bayseian_classifier(dimention, x, y, mean_vector, co_variance_matrix
     #print "transpose_n_dim_sample_minus_mean_vector"
     #print transpose_n_dim_sample_minus_mean_vector
     compute_arg1 = (1/(two_pi_power_d_by_two * math.sqrt(determinant_sigma_co_variance)))
-    return_value = (compute_arg1 * np.exp ((1/2) * np.matrix(n_dim_sample_minus_mean_vector) * inverse_sigma_co_variance * transpose_n_dim_sample_minus_mean_vector))
+    return_value = (compute_arg1 * np.exp ((-1/2) * np.matrix(n_dim_sample_minus_mean_vector) * inverse_sigma_co_variance * transpose_n_dim_sample_minus_mean_vector))
     return return_value
 
 def find_probability_by_bayseian(height, handspan, m_mean_vector, m_covariance_array,f_mean_vector, f_covariance_array):
