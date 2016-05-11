@@ -251,12 +251,13 @@ def  get_pca_of_digit(digit_1 =np.arange(10), digit_2 =np.arange(10)):
     print "First row in R"
     #print R[0]
 
-    return  np.array(P1P2), no_of_samples_1, mean_vector,eg_vector_real
+    #return  np.array(P1P2), no_of_samples_1, mean_vector,eg_vector_real
+    return  np.array(P1P2), no_of_samples_1, mean_vector,V
 
 
-def find_2_principal_comp(x, mu, eg_val):
+def find_2_principal_comp(x, mu, eg_vec):
     z = x-mu
-    PCA  = z * (np.matrix(eg_val).transpose())
+    PCA  = z * (np.matrix(eg_vec).transpose())
     print "Size of 2 principal comp is ", np.shape(PCA)
     P1P2 = np.array(PCA)
     return P1P2[0][0], P1P2[0][1]
@@ -284,16 +285,39 @@ def find_regular_probability(d1_count, d2_count):
         print "The probability can't be determined with given training set"
     return
 
+def compute_bayseian_classifier(n, x, y, mean_vector, co_variance_matrix):
+    determinant_sigma_co_variance = np.linalg.det(co_variance_matrix)
+    sqrt_determinant_sigma_co_variance = math.sqrt(determinant_sigma_co_variance)
+    n_by_sqrt_determinant_sigma_co_variance = n/sqrt_determinant_sigma_co_variance
+    n_dim_sample_minus_mean_vector =  ((x,y)- mean_vector)
+    inverse_sigma_co_variance = np.linalg.inv(co_variance_matrix)
+    transpose_n_dim_sample_minus_mean_vector = np.matrix(n_dim_sample_minus_mean_vector).transpose()
+    return_value = (n_by_sqrt_determinant_sigma_co_variance * np.exp ((-1/2) * np.matrix(n_dim_sample_minus_mean_vector) * inverse_sigma_co_variance * transpose_n_dim_sample_minus_mean_vector))
+    return return_value
+
+def find_probability_by_bayseian(x, y, d1_mean, d1_covariance,d2_mean, d2_covariance, n1, n2):
+    print  "--------------------------------------------"
+    print  "Finding probability through Bayes Classifier"
+    print  "--------------------------------------------"
+    bc_d1 = compute_bayseian_classifier(n1, x, y, d1_mean, d1_covariance)
+    bc_d2 = compute_bayseian_classifier(n2, x, y, d2_mean, d2_covariance)
+    print "BC-Digit-1-Result:%f, BC-Digit-2-Result:%f" %(bc_d1,bc_d2)
+    if (bc_d1 > bc_d2):
+        print "Sample is most likely Digit:X"
+    elif(bc_d2 > bc_d1):
+        print "Sample is most likely DIGIT:Y"
+    else:
+        print "Sample is Indeterminant"
 
 
-dim_1_2d,sample_1_cnt, dim_1_mean, dim_1_eg_val = get_pca_of_digit(5,6)
+pca_2d ,sample_1_cnt, mean_value, eigen_vector  = get_pca_of_digit(2,4)
 #write_image_to_text_file(x_axis_digit_1, "one_x")
 
 # scatter plot
 # for plotting;
-no_r, no_c = np.shape(dim_1_2d)
-x_axis = dim_1_2d[:,0]
-y_axis = dim_1_2d[:,1]
+no_r, no_c = np.shape(pca_2d)
+x_axis = pca_2d[:,0]
+y_axis = pca_2d[:,1]
 f, ax = plt.subplots()
 for i in range(sample_1_cnt):
     ax.scatter(x_axis[i],y_axis[i],c="r", marker='o')
@@ -306,8 +330,21 @@ ax.set_xlabel("x axis")
 ax.set_ylabel("y axis")
 plt.show()
 
+pca_for_digit_1= pca_2d[0:sample_1_cnt,:]
+pca_for_digit_2= pca_2d[(sample_1_cnt+1):no_r,:]
 
+# Bayes classificaton/Gaussian model
+# pre-computation for Bayes classification/Gaussian model
+d1_mean = np.mean(pca_for_digit_1, axis=0)
+d1_covariance =  np.ma.cov(pca_for_digit_1, rowvar= False)
+d1_n , d1_sample_cols = np.shape(pca_for_digit_1)
+#print d1_covariance_array
 
+d2_mean = np.mean(pca_for_digit_2, axis=0)
+d2_covariance =  np.ma.cov(pca_for_digit_2, rowvar= False)
+d2_n, d2_sample_cols = np.shape(pca_for_digit_2)
+
+# Pre-computation for histogram
 #find min and max
 min_x = min(x_axis)
 max_x = max(x_axis)
@@ -315,16 +352,17 @@ min_y = min(y_axis)
 max_y = max(y_axis)
 bin_size = 15
 
-d1_inst =  class_2d_hist.histogram_2d(dim_1_2d, min_x, max_x, min_y, max_y, bin_size)
+
+d1_inst =  class_2d_hist.histogram_2d(pca_for_digit_1, min_x, max_x, min_y, max_y, bin_size)
 d1_2d_hist =  d1_inst.get_2d_histogram()
-print "sizeof d1_2d_hist", np.shape(d1_2d_hist)
-print d1_2d_hist
+#print "sizeof d1_2d_hist", np.shape(d1_2d_hist)
+#print d1_2d_hist
 
 
-d2_inst =  class_2d_hist.histogram_2d(dim_2_2d, min_x, max_x, min_y, max_y, bin_size)
+d2_inst =  class_2d_hist.histogram_2d(pca_for_digit_2, min_x, max_x, min_y, max_y, bin_size)
 d2_2d_hist =  d2_inst.get_2d_histogram()
-print "sizeof d2_2d_hist", np.shape(d2_2d_hist)
-print d2_2d_hist
+#print "sizeof d2_2d_hist", np.shape(d2_2d_hist)
+#print d2_2d_hist
 
 
 
@@ -334,27 +372,17 @@ test_image , test_label =  load_feature_vector(1, 'training')
 # Take randomly or in this ase just 100th entry for input
 test_image_input =  test_image[100,:]
 
-
 # Get P1 and P2 from principal component
-test_digit_pca_feature_1, test_digit_pca_feature_2 = find_2_principal_comp(test_image_input, dim_1_mean, dim_1_eg_val)
-print test_digit_pca_feature_1,test_digit_pca_feature_2
+x_test_input, y_test_input = find_2_principal_comp(test_image_input, mean_value, eigen_vector)
+print x_test_input,y_test_input
+
+#Bayes classification
+find_probability_by_bayseian(x_test_input, y_test_input, d1_mean, d1_covariance, d2_mean, d2_covariance, d1_n, d2_n)
 
 # probablity
-d1_count = d1_inst.get_bin_count(test_digit_pca_feature_1, test_digit_pca_feature_2)
-d2_count = d2_inst.get_bin_count(test_digit_pca_feature_1, test_digit_pca_feature_2)
+d1_count = d1_inst.get_bin_count(x_test_input, y_test_input)
+d2_count = d2_inst.get_bin_count(x_test_input, y_test_input)
 find_regular_probability(d1_count, d2_count)
 
-# Bayes classificaton/Gaussian model
-# Calculate Male MEAN, VARIANCE etc
-d1_mean = np.mean(dim_1_2d, axis=0)
-d1_covariance_array  =  np.ma.cov(dim_1_2d, rowvar= False)
-d1_row_samples, d1_sample_cols = np.shape(dim_1_2d)
-print d1_covariance_array
-
-
-d2_mean = np.mean(dim_2_2d, axis=0)
-d2_covariance_array  =  np.ma.cov(dim_2_2d, rowvar= False)
-d2_row_samples, d2_sample_cols = np.shape(dim_2_2d)
-print d2_covariance_array
 
 

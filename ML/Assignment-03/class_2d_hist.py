@@ -11,7 +11,7 @@ class histogram_2d:
         self.bin_size = bin_size
 
     def get_bin_index(self, item, min_range, max_range):
-        return (float (1 + ((self.bin_size -1)*((item - min_range)/(max_range-min_range)))))
+        return (round(1 + ((self.bin_size -1)*((item - min_range)/(max_range-min_range)))))
 
     def get_2d_histogram(self):
         histogram_2d = np.zeros([self.bin_size, self.bin_size],dtype=float)
