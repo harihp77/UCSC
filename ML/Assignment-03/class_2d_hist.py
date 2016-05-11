@@ -19,5 +19,12 @@ class histogram_2d:
             r = self.get_bin_index(d1, self.min_d1, self.max_d1)
             c = self.get_bin_index(d2, self.min_d2, self.max_d2)
             histogram_2d[r-1, c-1] += 1
+        self.histogram_2d = histogram_2d
         return histogram_2d
+
+    def  get_bin_count(self, p1, p2):
+        r = self.get_bin_index(p1, self.min_d1, self.max_d1)
+        c = self.get_bin_index(p2, self.min_d2, self.max_d2)
+        bc = self.histogram_2d[r][c]
+        return bc
 

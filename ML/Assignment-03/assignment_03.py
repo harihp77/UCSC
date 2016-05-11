@@ -11,6 +11,7 @@ import xlwt
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 import class_2d_hist
+import scipy.sparse as sp
 
 
 
@@ -150,45 +151,67 @@ def convert_eg_vector_to_real(eg_vector):
 
 
 
-def  get_pca_of_digit(digits=np.arange(10)):
-    digit_names = ["one", "two", "three", "four","five","six", "seven", "eight", "nine", "ten"]
-    digit_name = digit_names[digits]
-    print  "Digit name:", digit_name
+def  get_pca_of_digit(digit_1 =np.arange(10), digit_2 =np.arange(10)):
+    digit_names = ["zero", "one", "two", "three", "four","five","six", "seven", "eight", "nine", "ten"]
+    digit_name_1 = digit_names[digit_1]
+    digit_name_2 = digit_names[digit_2]
+    print  "Constructing training set for digits name:", digit_name_1, digit_name_2
 
     # Get X - The training set
-    images, labels = load_feature_vector(digits, 'training')
-    print images[0]
+    images_1, labels_1 = load_feature_vector(digit_1, 'training')
+    no_of_samples_1, no_of_cols = np.shape(images_1)
+
+    images_2, labels_2 = load_feature_vector(digit_2, 'training')
+    no_of_samples_2, no_of_cols = np.shape(images_2)
+
+    total_no_of_samples = no_of_samples_1 + no_of_samples_2
+
+    images = zeros((total_no_of_samples, no_of_cols), dtype=float)
+    labels = zeros((total_no_of_samples, 1), dtype=int8)
+
+    for i in range(no_of_samples_1):
+        images[i] = numpy.array(images_1[i]).reshape((no_of_cols))
+        labels[i] = numpy.array(labels_1[i])
+
+    for i in range(no_of_samples_2):
+        images[no_of_samples_1+i] = numpy.array(images_2[i]).reshape((no_of_cols))
+        labels[no_of_samples_1+i] = numpy.array(labels_2[i])
+
+    total_no_of_sampes, total_cols = np.shape(images)
+    print "Total sampels info:  image_1:%d, image_2:%d, image_total:%d, total_cols:%d" %(no_of_samples_1, no_of_samples_2, total_no_of_sampes, total_cols)
+
     # Compute Z  - The Zero matrix
     Z = z_matrix(images)
     #print "Z Matrix dtype:", Z.dtype
     #print Z[0]
 
-    # compute mean and write in excel.
+    # compute mean;  Returning as part of this function
     mean_vector =  np.mean(images, axis=0)
-    mean_image = images.mean(axis=0)
-    max_image_val = max(mean_image)
-    #print  "MAX value", max_image_val
-    #print  "MIN value", min(mean_image)
 
+    # For testing.
     # Write mean value of image to text file
     # Alternatively we can pass any row in image[i]
-    write_image_to_text_file(mean_vector, digit_name)
-    write_mean_image_excel(mean_vector,digit_name)
+    mean_vector_1 =  np.mean(images_1, axis=0)
+    mean_vector_2 =  np.mean(images_2, axis=0)
+    write_image_to_text_file(mean_vector_1, digit_name_1)
+    write_image_to_text_file(mean_vector_2, digit_name_2)
 
     # Find co-variance matrix
-    print "Finding COVARIANCE for digit:", digits
+    print "Finding COVARIANCE for digits:", digit_1, digit_2
     print "......"
     print "......"
-    C =  np.ma.cov(images, rowvar= False)
-    write_cov_to_text_file(C, digit_name)
+    C =  np.ma.cov(Z, rowvar= False)
+    write_cov_to_text_file(C, digit_name_1+"_"+digit_name_2)
+    C_array = np.array(C)
 
     # Find Eigen value using co-variance
-    print "Finding Eigen Vector for digit:", digits
+    print "Finding Eigen Vector for digits:", digit_1, digit_2
     print "......"
     print "......"
-    eg_val,eg_vector = LA.eig(C)
+    eg_val,eg_vector = LA.eig(C_array)
     #print "Eigen VALUE"
     #print eg_val
+
 
     print "Converting Eigen values which is COMPLEX to REAL values"
     eg_vector_real = convert_eg_vector_to_real(eg_vector)
@@ -206,81 +229,132 @@ def  get_pca_of_digit(digits=np.arange(10)):
     V = np.matrix(eg_vector_real).transpose()
     TV = np.matrix(V).transpose()
     print  "TV.dtype", TV.dtype
-    #P = Z*TV
     P = Z*TV
 
     # Test if the mean of P is approximately ZERO
     #p_mean = np.mean(P,axis=0)
-    #print "P Mean"
     #print p_mean
 
     P1P2 = P[:,0:2]
     X_AXIS=P[:,0]
-    #X_AXIS=P[:,783]
     print "X_AXIS-SHAPE", np.shape(X_AXIS)
     Y_AXIS=P[:,1]
-    #Y_AXIS=P[:,782]
     print "Y_AXIS-SHAPE", np.shape(Y_AXIS)
 
     PC =  np.ma.cov(P, rowvar= False)
     w1,v1 = LA.eig(PC)
     #print "Eigen values for PC"
     #print w1
-    X_AXIS_array = np.array(X_AXIS)
-    Y_AXIS_array = np.array(Y_AXIS)
 
     # Reconstruct Zero matrix
     R = P*V
     print "First row in R"
     #print R[0]
 
-    return  X_AXIS_array, Y_AXIS_array, np.array(P1P2)
+    return  np.array(P1P2), no_of_samples_1, mean_vector,eg_vector_real
 
 
-def find_min_max(a1,a2):
-    first_d_min_size = min(a1)
-    first_d_max_size = max (a1)
-    print "Fist array - MIN:%d, MAX:%d" %(first_d_min_size, first_d_max_size)
-    second_d_min_size = min(a2)
-    second_d_max_size = max (a2)
-    print "Second array MIN:%d, MAX:%d" %(second_d_min_size, second_d_max_size)
+def find_2_principal_comp(x, mu, eg_val):
+    z = x-mu
+    PCA  = z * (np.matrix(eg_val).transpose())
+    print "Size of 2 principal comp is ", np.shape(PCA)
+    P1P2 = np.array(PCA)
+    return P1P2[0][0], P1P2[0][1]
 
-    if (first_d_min_size > second_d_min_size):
-        min_d = first_d_min_size
+def find_regular_probability(d1_count, d2_count):
+    d1_prob=0
+    d2_prob=0
+    t_count = d1_count+d2_count
+    if (t_count == 0):
+        print "The probability can't be determined with given training set"
+        return
+
+    if (d1_count != 0):
+        d1_prob =  d1_count/t_count
+
+    if (d2_count != 0):
+        d2_prob =  d2_count/t_count
+
+    print "D1-count:%f, D2-count:%f, Total-count:%d" %(d1_count,d2_count,t_count)
+    if (d1_prob > d2_prob):
+        print "The probability is Digit-1"
+    elif (d2_prob > d1_prob):
+        print "The probability is Digit-2"
     else:
-        min_d = second_d_min_size
-
-    if (first_d_max_size > second_d_max_size):
-        max_d = first_d_max_size
-    else:
-        max_d = second_d_max_size
-    return min_d, max_d
+        print "The probability can't be determined with given training set"
+    return
 
 
 
-
-x_axis_digit_1, y_axis_digit_1, dimention1_2d  = get_pca_of_digit(1)
-x_axis_digit_2, y_axis_digit_2, dimention2_2d = get_pca_of_digit(8)
-write_image_to_text_file(x_axis_digit_1, "one_x")
+dim_1_2d,sample_1_cnt, dim_1_mean, dim_1_eg_val = get_pca_of_digit(5,6)
+#write_image_to_text_file(x_axis_digit_1, "one_x")
 
 # scatter plot
-#f, ax = plt.subplots()
-#ax.scatter(x_axis_digit_1,y_axis_digit_1,c="r", marker='o')
-#ax.scatter(x_axis_digit_2,y_axis_digit_2,c="b", marker='o')
-#ax.set_xlabel("x axis")
-#ax.set_ylabel("y axis")
-#plt.show()
+# for plotting;
+no_r, no_c = np.shape(dim_1_2d)
+x_axis = dim_1_2d[:,0]
+y_axis = dim_1_2d[:,1]
+f, ax = plt.subplots()
+for i in range(sample_1_cnt):
+    ax.scatter(x_axis[i],y_axis[i],c="r", marker='o')
+
+remaining_cnt = no_r - sample_1_cnt
+for i in range(remaining_cnt):
+    ax.scatter(x_axis[i+sample_1_cnt],y_axis[i+sample_1_cnt],c="b", marker='o')
+
+ax.set_xlabel("x axis")
+ax.set_ylabel("y axis")
+plt.show()
 
 
 
 #find min and max
-min_d1, max_d1 = find_min_max(x_axis_digit_1, x_axis_digit_2)
-min_d2, max_d2 = find_min_max(y_axis_digit_1, y_axis_digit_2)
-print "Min:%f and Max:%f of dimention-1" %(min_d1, max_d1)
-print "Min:%f and Max:%f of dimention-2" %(min_d2, max_d2)
+min_x = min(x_axis)
+max_x = max(x_axis)
+min_y = min(y_axis)
+max_y = max(y_axis)
 bin_size = 15
 
-d1_2d_hist_inst =  class_2d_hist.histogram_2d(dimention1_2d, min_d1, max_d1, min_d2, max_d2, bin_size)
-d1_2d_hist =  d1_2d_hist_inst.get_2d_histogram()
+d1_inst =  class_2d_hist.histogram_2d(dim_1_2d, min_x, max_x, min_y, max_y, bin_size)
+d1_2d_hist =  d1_inst.get_2d_histogram()
 print "sizeof d1_2d_hist", np.shape(d1_2d_hist)
 print d1_2d_hist
+
+
+d2_inst =  class_2d_hist.histogram_2d(dim_2_2d, min_x, max_x, min_y, max_y, bin_size)
+d2_2d_hist =  d2_inst.get_2d_histogram()
+print "sizeof d2_2d_hist", np.shape(d2_2d_hist)
+print d2_2d_hist
+
+
+
+
+# TEST input
+test_image , test_label =  load_feature_vector(1, 'training')
+# Take randomly or in this ase just 100th entry for input
+test_image_input =  test_image[100,:]
+
+
+# Get P1 and P2 from principal component
+test_digit_pca_feature_1, test_digit_pca_feature_2 = find_2_principal_comp(test_image_input, dim_1_mean, dim_1_eg_val)
+print test_digit_pca_feature_1,test_digit_pca_feature_2
+
+# probablity
+d1_count = d1_inst.get_bin_count(test_digit_pca_feature_1, test_digit_pca_feature_2)
+d2_count = d2_inst.get_bin_count(test_digit_pca_feature_1, test_digit_pca_feature_2)
+find_regular_probability(d1_count, d2_count)
+
+# Bayes classificaton/Gaussian model
+# Calculate Male MEAN, VARIANCE etc
+d1_mean = np.mean(dim_1_2d, axis=0)
+d1_covariance_array  =  np.ma.cov(dim_1_2d, rowvar= False)
+d1_row_samples, d1_sample_cols = np.shape(dim_1_2d)
+print d1_covariance_array
+
+
+d2_mean = np.mean(dim_2_2d, axis=0)
+d2_covariance_array  =  np.ma.cov(dim_2_2d, rowvar= False)
+d2_row_samples, d2_sample_cols = np.shape(dim_2_2d)
+print d2_covariance_array
+
+
