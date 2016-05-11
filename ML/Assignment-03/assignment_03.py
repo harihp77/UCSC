@@ -66,7 +66,7 @@ def load_feature_vector(digit, dataset="training"):
 
 
 def write_image_to_text_file(image_array, digit_name):
-    digt_image_text = os.path.join(".", digit_name+'_image_text')
+    digt_image_text = os.path.join(".", digit_name+'_image')
     fdesc = open (digt_image_text, "w")
     for count in range (len(image_array)):
         fdesc.write(str(image_array[count]) + "\n")
@@ -136,6 +136,15 @@ def z_matrix(x):
     print ("Done with populating ZERO matrix")
     return z_matrix
 
+def get_x_new(x,mu):
+    rows, col = np.shape(x)
+    x_new= zeros((rows, col), dtype=float)
+    for  j in range(col):
+        for i in range(rows):
+            x_new[i][j] = x[i][j]+mu[j]
+    print ("Done with populating reduced dim matrix")
+    return x_new
+
 
 def convert_eg_vector_to_real(eg_vector):
     a = np.array(eg_vector)
@@ -148,6 +157,17 @@ def convert_eg_vector_to_real(eg_vector):
     else :
         print ("Done copying complex to float to eignen vector ")
     return eg_vector_ret
+
+def plot_mean_vector(array):
+    fg, ax = plt.subplots()
+    for i in range(len(array)):
+        #ax.scatter(i, array[i])
+        plt.plot(i, array[i], ".",c="b")
+    ax.set_xlabel("x axis")
+    ax.set_ylabel("y axis")
+    ax.set_title("Mean image plot")
+    plt.show()
+    fg.savefig('mean_plot.jpg')
 
 
 
@@ -187,14 +207,8 @@ def  get_pca_of_digit(digit_1 =np.arange(10), digit_2 =np.arange(10)):
 
     # compute mean;  Returning as part of this function
     mean_vector =  np.mean(images, axis=0)
-
-    # For testing.
-    # Write mean value of image to text file
-    # Alternatively we can pass any row in image[i]
-    mean_vector_1 =  np.mean(images_1, axis=0)
-    mean_vector_2 =  np.mean(images_2, axis=0)
-    write_image_to_text_file(mean_vector_1, digit_name_1)
-    write_image_to_text_file(mean_vector_2, digit_name_2)
+    write_image_to_text_file(mean_vector, "mean_vector")
+    plot_mean_vector(np.array(mean_vector))
 
     # Find co-variance matrix
     print "Finding COVARIANCE for digits:", digit_1, digit_2
@@ -236,10 +250,6 @@ def  get_pca_of_digit(digit_1 =np.arange(10), digit_2 =np.arange(10)):
     #print p_mean
 
     P1P2 = P[:,0:2]
-    X_AXIS=P[:,0]
-    print "X_AXIS-SHAPE", np.shape(X_AXIS)
-    Y_AXIS=P[:,1]
-    print "Y_AXIS-SHAPE", np.shape(Y_AXIS)
 
     PC =  np.ma.cov(P, rowvar= False)
     w1,v1 = LA.eig(PC)
@@ -248,8 +258,15 @@ def  get_pca_of_digit(digit_1 =np.arange(10), digit_2 =np.arange(10)):
 
     # Reconstruct Zero matrix
     R = P*V
-    print "First row in R"
-    #print R[0]
+    # Construct N*d matrix from reduced dimensions
+    X_NEW = get_x_new(np.array(R),np.array(mean_vector))
+
+    arr_index=1100
+    x_new_dump = X_NEW[arr_index,:]
+
+    # For testing.
+    write_image_to_text_file(images[arr_index], digit_name_2+"_orig" )
+    write_image_to_text_file(x_new_dump, digit_name_2+"_reconst" )
 
     #return  np.array(P1P2), no_of_samples_1, mean_vector,eg_vector_real
     return  np.array(P1P2), no_of_samples_1, mean_vector,V
@@ -320,15 +337,18 @@ x_axis = pca_2d[:,0]
 y_axis = pca_2d[:,1]
 f, ax = plt.subplots()
 for i in range(sample_1_cnt):
-    ax.scatter(x_axis[i],y_axis[i],c="r", marker='o')
+    plt_1 = ax.scatter(x_axis[i],y_axis[i],c="r", marker='o', label="TWO")
 
 remaining_cnt = no_r - sample_1_cnt
 for i in range(remaining_cnt):
-    ax.scatter(x_axis[i+sample_1_cnt],y_axis[i+sample_1_cnt],c="b", marker='o')
+    plt_2 = ax.scatter(x_axis[i+sample_1_cnt],y_axis[i+sample_1_cnt],c="b", marker='o', label="FOUR")
 
 ax.set_xlabel("x axis")
 ax.set_ylabel("y axis")
-plt.show()
+ax.set_title("Digits - Two & Four_plot")
+plt.legend([plt_1, plt_2], ["TWO", "FOUR"])
+#plt.show()
+f.savefig('Two_Four_plot.jpg')
 
 pca_for_digit_1= pca_2d[0:sample_1_cnt,:]
 pca_for_digit_2= pca_2d[(sample_1_cnt+1):no_r,:]
