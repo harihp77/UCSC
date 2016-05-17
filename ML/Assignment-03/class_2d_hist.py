@@ -11,7 +11,7 @@ class histogram_2d:
         self.bin_size = bin_size
 
     def get_bin_index(self, item, min_range, max_range):
-        return (round(1 + ((self.bin_size -1)*((item - min_range)/(max_range-min_range)))))
+        return (float (1 + ((self.bin_size -1)*((item - min_range)/(max_range-min_range)))))
 
     def get_2d_histogram(self):
         histogram_2d = np.zeros([self.bin_size, self.bin_size],dtype=float)
@@ -23,8 +23,8 @@ class histogram_2d:
         return histogram_2d
 
     def  get_bin_count(self, p1, p2):
-        r = self.get_bin_index(p1, self.min_d1, self.max_d1)
-        c = self.get_bin_index(p2, self.min_d2, self.max_d2)
-        bc = self.histogram_2d[r][c]
+        r = round(self.get_bin_index(p1, self.min_d1, self.max_d1))
+        c = round(self.get_bin_index(p2, self.min_d2, self.max_d2))
+        bc = self.histogram_2d[r-1][c-1]
         return bc
 
