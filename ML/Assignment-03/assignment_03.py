@@ -362,6 +362,15 @@ def find_classifier_result(test_image, d1_inst, d2_inst, is_match,  d1_mean, d1_
     no_of_prob_true_match=0
     no_of_prob_false_match=0
     no_of_prob_indt = 0
+    bc_true_negative=0
+    bc_true_positive=0
+    bc_false_positive =0
+    bc_false_negative=0
+    prob_true_negative=0
+    prob_true_positive=0
+    prob_false_positive =0
+    prob_false_negative=0
+
 
     for i in range(no_of_entries):
         test_image_input =  test_image[i,:]
@@ -376,6 +385,19 @@ def find_classifier_result(test_image, d1_inst, d2_inst, is_match,  d1_mean, d1_
         else:
             no_of_bc_indt += 1
 
+        if (digit == 2):
+            if (bc_rc == 1):
+                bc_true_negative += 1
+            elif (bc_rc == 2):
+                bc_false_positive +=1
+        elif (digit ==4):
+            if (bc_rc == 1):
+                bc_false_negative += 1
+            elif (bc_rc == 2):
+                bc_true_positive +=1
+
+
+
         # probablity
         d1_count = d1_inst.get_bin_count(x_test_input, y_test_input)
         d2_count = d2_inst.get_bin_count(x_test_input, y_test_input)
@@ -386,6 +408,19 @@ def find_classifier_result(test_image, d1_inst, d2_inst, is_match,  d1_mean, d1_
             no_of_prob_false_match += 1
         else:
             no_of_prob_indt += 1
+
+        if (digit == 2):
+            if (prob_rc == 1):
+                prob_true_negative += 1
+            elif (prob_rc == 2):
+                prob_false_positive +=1
+        elif (digit ==4):
+            if (prob_rc == 1):
+                prob_false_negative += 1
+            elif (prob_rc == 2):
+                prob_true_positive +=1
+
+
 
     print "*******************************************************************"
     print "                RESULTS from classifier"
@@ -406,6 +441,19 @@ def find_classifier_result(test_image, d1_inst, d2_inst, is_match,  d1_mean, d1_
     print "PROB-RESULTS,     MATCHING    :", no_of_prob_true_match
     print "PROB-RESULTS,     NOT-MATCHING:", no_of_prob_false_match
     print "PROB-RESULTS,     INDT        :", no_of_prob_indt
+    print "*******************************************************************"
+    print "*******************************************************************"
+    print "BAYES  -   TRUE POSTIVE       :", bc_true_positive
+    print "BAYES  -   TRUE NETATIVE      :", bc_true_negative
+    print "BAYES  -   FALSE POSITIVE     :", bc_false_positive
+    print "BAYES  -   FALSE NEGATIVE     :", bc_false_negative
+    print "*******************************************************************"
+    print "*******************************************************************"
+    print "HIST   -   TRUE POSTIVE       :", prob_true_positive
+    print "HIST   -   TRUE NETATIVE      :", prob_true_negative
+    print "HIST   -   FALSE POSITIVE     :", prob_false_positive
+    print "HIST   -   FALSE NEGATIVE     :", prob_false_negative
+    print "*******************************************************************"
     print "*******************************************************************"
 
 
@@ -456,3 +504,29 @@ d2_2d_hist =  d2_inst.get_2d_histogram()
 # TEST input
 test_image_d1 , test_label_d1 =  load_feature_vector(2, 'testing')
 find_classifier_result(test_image_d1, d1_inst, d2_inst,True,d1_mean, d1_covariance, d2_mean, d2_covariance, d1_n, d2_n,2 )
+
+test_image_d1 , test_label_d1 =  load_feature_vector(4, 'testing')
+find_classifier_result(test_image_d1, d1_inst, d2_inst,True,d1_mean, d1_covariance, d2_mean, d2_covariance, d1_n, d2_n,4 )
+
+
+#COmputed value from the above test input
+bc_tp = 952
+bc_tn = 998
+bc_fp = 34
+bc_fn = 30
+
+hist_tp= 946
+hist_tn= 939
+hist_fp= 62
+hist_fn= 11
+
+# Calculate the Accuracy of classifier
+print  "Accuracy of Bayes classifier:" ,((bc_tp + bc_tn)/float(bc_tp + bc_fn + bc_fp + bc_tn))
+print  "Accuracy of Histogram classifier:",  (hist_tp + hist_tn)/float(hist_tp + hist_fn + hist_fp + hist_tn)
+print  "Sensitivity of Bayes classifier:",  (bc_tp )/float(bc_tp + bc_fn )
+print  "Sensitivity of Histogram classifier:",  (hist_tp )/float(hist_tp + hist_fn )
+print  "Specificity of Bayes classifier:",  (bc_tn)/float(bc_fp + bc_tn)
+print  "Specificity of Histogram classifier:",  (hist_tn)/float(hist_fp + hist_tn)
+print  "Positive Predictive Value of Bayes classifier:",  (bc_tp )/float(bc_fp + bc_tp)
+print  "Positive Predictive  Value of Histogram classifier:",  (hist_tp )/float(hist_tp + hist_fp )
+
