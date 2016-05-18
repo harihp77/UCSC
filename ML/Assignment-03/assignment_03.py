@@ -509,7 +509,7 @@ test_image_d1 , test_label_d1 =  load_feature_vector(4, 'testing')
 find_classifier_result(test_image_d1, d1_inst, d2_inst,True,d1_mean, d1_covariance, d2_mean, d2_covariance, d1_n, d2_n,4 )
 
 
-#COmputed value from the above test input
+#Below results obtained from the above test inputs for digits 2&4
 bc_tp = 952
 bc_tn = 998
 bc_fp = 34
