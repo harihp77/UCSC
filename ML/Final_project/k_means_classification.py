@@ -60,8 +60,6 @@ def write_image_to_pgm_file(image_array, name, is_write=False):
         fdesc.write(("255 # Max ") + "\n")
         for count in range (len(image_array)):
             fdesc.write(str(image_array[count]) + "\n")
-        else :
-            print ("Done with image to PGM operation")
         fdesc.close()
 
 
@@ -126,8 +124,8 @@ def digits_plot_scatter_3d(x_axis, y_axis, z_axis, digit_1, digit_2, digit_3, di
 
 def plot_scatter_k_means_2d(n_clusters, clusters, is_plot=False):
     if is_plot:
-        class_name = ["Class_1", "Class_2", "Class_3", "Class_4", "Class_5", "Class_6", "Class_7"]
-        colors = ["lime", "aqua","deeppink", "orangered","dodgerblue"]
+        class_name = ["Class_1", "Class_2", "Class_3", "Class_4", "Class_5", "Class_6", "Class_7", "Class_8", "Class_9", "Class_10", "Class_11", "Class_12", "Class_12", "Class_13", "Class_14", "Class_15"]
+        colors = ["lime", "aqua","deeppink", "orangered","dodgerblue", "magenta","darkolivegreen","crimson","yellow","darkorchid","dodgerblue", "mediumpurple","hotpink","cyan","orangered" ]
         fig, ax = plt.subplots()
         ax.set_xlabel("x axis")
         ax.set_ylabel("y axis")
@@ -143,8 +141,8 @@ def plot_scatter_k_means_2d(n_clusters, clusters, is_plot=False):
 
 def plot_scatter_k_means_3d(n_clusters, clusters, is_plot=False):
     if is_plot:
-        class_name = ["Class_1", "Class_2", "Class_3", "Class_4", "Class_5", "Class_6", "Class_7"]
-        colors = ["lime", "aqua","deeppink", "orangered","dodgerblue"]
+        class_name = ["Class_1", "Class_2", "Class_3", "Class_4", "Class_5", "Class_6", "Class_7", "Class_8", "Class_9", "Class_10", "Class_11", "Class_12", "Class_12", "Class_13", "Class_14", "Class_15"]
+        colors = ["lime", "aqua","deeppink", "orangered","dodgerblue", "magenta","darkolivegreen","crimson","yellow","darkorchid","dodgerblue", "mediumpurple","hotpink","cyan","orangered" ]
         fig = plt.figure()
         ax = fig.add_subplot(111, projection = '3d')
         ax.set_xlabel("x axis")
@@ -317,6 +315,7 @@ def  get_matching_class_entries_from_x(class_id, X, class_array):
 
 def print_random_images(matching_class_entries, class_name, no_of_images):
     rows,cols=np.shape(matching_class_entries)
+    print class_name, np.shape(matching_class_entries)
     for i in range(no_of_images):
         rand_index = random.randint(0, rows)
         file_name = class_name +  "_rand_image_" +  str(i)
@@ -333,10 +332,10 @@ digit_2 = 3
 digit_3 = 5
 is_two_dimention = False
 is_three_dimention = True
-is_ten_dimention = True
+is_ten_dimention = False
 
 # K-Means init
-n_clusters = 5
+n_clusters = 10
 
 # Parse and get matching digits
 X, digit_1_cnt, digit_2_cnt, digit_3_cnt = get_sequenced_matching_digits_array_from_training_set(digit_1, digit_2, digit_3 )
@@ -350,9 +349,9 @@ x_axis = pca_2d[:,0]
 y_axis = pca_2d[:,1]
 z_axis = pca_3d[:,2]
 if ( is_two_dimention):
-    digits_plot_scatter_2d(x_axis, y_axis, digit_1, digit_2, digit_3, digit_1_cnt, digit_2_cnt, digit_3_cnt, True )
+    digits_plot_scatter_2d(x_axis, y_axis, digit_1, digit_2, digit_3, digit_1_cnt, digit_2_cnt, digit_3_cnt, False)
 else:
-    digits_plot_scatter_3d(x_axis, y_axis, z_axis, digit_1, digit_2, digit_3, digit_1_cnt, digit_2_cnt, digit_3_cnt, True )
+    digits_plot_scatter_3d(x_axis, y_axis, z_axis, digit_1, digit_2, digit_3, digit_1_cnt, digit_2_cnt, digit_3_cnt, False)
 
 
 
@@ -381,7 +380,7 @@ elif (is_three_dimention):
 
 # Lets print the image randomly feature vectors in the class
 no_of_images_to_print=20
-class_name = ["Class_1", "Class_2", "Class_3", "Class_4", "Class_5", "Class_6", "Class_7"]
+class_name = ["Class_1", "Class_2", "Class_3", "Class_4", "Class_5", "Class_6", "Class_7", "Class_8", "Class_9", "Class_10", "Class_11", "Class_12", "Class_12", "Class_13", "Class_14", "Class_15"]
 for i in range(n_clusters):
     matching_class_entries = get_matching_class_entries_from_x(i, X, class_array)
     print_random_images(matching_class_entries, class_name[i], no_of_images_to_print)
