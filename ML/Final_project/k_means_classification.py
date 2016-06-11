@@ -76,7 +76,7 @@ def plot_mean_vector(array, is_plot=False):
         plt.show()
         fg.savefig('mean_plot.jpg')
 
-def plot_scatter_2d(x_axis, y_axis, digit_1, digit_2, digit_3, digit_1_count, digit_2_count,digit_3_count, is_plot=False):
+def digits_plot_scatter_2d(x_axis, y_axis, digit_1, digit_2, digit_3, digit_1_count, digit_2_count,digit_3_count, is_plot=False):
     digit_names = ["zero", "one", "two", "three", "four","five","six", "seven", "eight", "nine", "ten"]
     digit_1_name = digit_names[digit_1]
     digit_2_name = digit_names[digit_2]
@@ -97,7 +97,7 @@ def plot_scatter_2d(x_axis, y_axis, digit_1, digit_2, digit_3, digit_1_count, di
         plt.show()
         f.savefig('digits_2d_plot.jpg')
 
-def plot_scatter_3d(x_axis, y_axis, z_axis, digit_1, digit_2, digit_3, digit_1_count, digit_2_count,digit_3_count, is_plot=False):
+def digits_plot_scatter_3d(x_axis, y_axis, z_axis, digit_1, digit_2, digit_3, digit_1_count, digit_2_count,digit_3_count, is_plot=False):
     digit_names = ["zero", "one", "two", "three", "four","five","six", "seven", "eight", "nine", "ten"]
     digit_1_name = digit_names[digit_1]
     digit_2_name = digit_names[digit_2]
@@ -119,7 +119,7 @@ def plot_scatter_3d(x_axis, y_axis, z_axis, digit_1, digit_2, digit_3, digit_1_c
         ax.set_title(title)
         plt.legend([plt_1, plt_2, plt_3], [digit_1_name, digit_2_name, digit_3_name])
         plt.show()
-        f.savefig('digits_2d_plot.jpg')
+        f.savefig('digits_3d_plot.jpg')
 
 
 
@@ -139,7 +139,7 @@ def plot_scatter_k_means_2d(n_clusters, clusters, is_plot=False):
             ppl.scatter(ax,x_axis, y_axis, color=colors[i], label=class_name[i])
         ppl.legend(ax)
         plt.show()
-        fig.savefig('k_means_classification_plot.jpg')
+        fig.savefig('k_means_classification_2d_plot.jpg')
 
 def plot_scatter_k_means_3d(n_clusters, clusters, is_plot=False):
     if is_plot:
@@ -159,7 +159,7 @@ def plot_scatter_k_means_3d(n_clusters, clusters, is_plot=False):
             ppl.scatter(ax,x_axis, y_axis, z_axis, color=colors[i], label=class_name[i])
         ppl.legend(ax)
         plt.show()
-        fig.savefig('k_means_classification_plot.jpg')
+        fig.savefig('k_means_classification_3d_plot.jpg')
 
 
 def get_sequenced_matching_digits_array_from_training_set(digit_1 =np.arange(10), digit_2 =np.arange(10), digit_3 =np.arange(10)):
@@ -235,6 +235,7 @@ def  get_pca_of_x(X):
 
     P1P2 = P[:,0:2]
     P1P2P3 = P[:,0:3]
+    P1P10 = P[:,0:10]
 
     #Following code is needed for assignment-03. Hence commenting here..
     '''
@@ -258,7 +259,7 @@ def  get_pca_of_x(X):
     write_image_to_pgm_file(X[arr_index], digit_name_1+"_orig_210" )
     display_image(X[arr_index].reshape(28,28),False)
     '''
-    return  np.array(P1P2), np.array(P1P2P3)
+    return  np.array(P1P2), np.array(P1P2P3) , np.array(P1P10)
 
 
 
@@ -331,6 +332,9 @@ digit_1 = 2
 digit_2 = 3
 digit_3 = 5
 is_two_dimention = False
+is_three_dimention = True
+is_ten_dimention = True
+
 # K-Means init
 n_clusters = 5
 
@@ -338,7 +342,7 @@ n_clusters = 5
 X, digit_1_cnt, digit_2_cnt, digit_3_cnt = get_sequenced_matching_digits_array_from_training_set(digit_1, digit_2, digit_3 )
 
 # Find PCA
-pca_2d , pca_3d = get_pca_of_x(X)
+pca_2d , pca_3d, pca_10d = get_pca_of_x(X)
 
 # scatter plot from TRUE values.
 no_r, no_c = np.shape(pca_2d)
@@ -346,16 +350,17 @@ x_axis = pca_2d[:,0]
 y_axis = pca_2d[:,1]
 z_axis = pca_3d[:,2]
 if ( is_two_dimention):
-    plot_scatter_2d(x_axis, y_axis, digit_1, digit_2, digit_3, digit_1_cnt, digit_2_cnt, digit_3_cnt, True )
+    digits_plot_scatter_2d(x_axis, y_axis, digit_1, digit_2, digit_3, digit_1_cnt, digit_2_cnt, digit_3_cnt, True )
 else:
-    #plot_scatter_3d(x_axis, y_axis, z_axis, 8, 5, 6, digit_1_cnt, digit_2_cnt, digit_3_cnt, True )
-    plot_scatter_3d(x_axis, y_axis, z_axis, digit_1, digit_2, digit_3, digit_1_cnt, digit_2_cnt, digit_3_cnt, True )
+    digits_plot_scatter_3d(x_axis, y_axis, z_axis, digit_1, digit_2, digit_3, digit_1_cnt, digit_2_cnt, digit_3_cnt, True )
 
 
 
 if ( is_two_dimention):
     X_K = pca_2d
-else:
+elif (is_ten_dimention):
+    X_K = pca_10d
+elif (is_three_dimention):
     X_K = pca_3d
 
 
@@ -366,14 +371,15 @@ mu, clusters = find_centroid(X_K, n_clusters)
 clusters, class_array  = classify_to_class_cluster(X_K, mu)
 
 # Plot each cluster
+# Note that plots is only for 2D and 3D
 if (is_two_dimention):
     plot_scatter_k_means_2d(n_clusters, clusters, True)
-else:
+elif (is_three_dimention):
     plot_scatter_k_means_3d(n_clusters, clusters, True)
 
 
 
-# Lets print the image randomly from members of the class
+# Lets print the image randomly feature vectors in the class
 no_of_images_to_print=20
 class_name = ["Class_1", "Class_2", "Class_3", "Class_4", "Class_5", "Class_6", "Class_7"]
 for i in range(n_clusters):
